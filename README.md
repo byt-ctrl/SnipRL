@@ -17,16 +17,16 @@ SnipRL is an enterprise-grade, privacy-focused URL shortening platform engineere
 
 ## Technology Stack
 
-| Component | Technology |
-|---|---|
-| Package Manager | pnpm workspaces |
-| Backend Server | Node.js, Fastify, TypeScript |
-| Database & ORM | PostgreSQL 16, Prisma ORM |
-| Cache & Message Queue | Redis 7, ioredis |
-| Frontend Web App | React 18, Vite, TypeScript, Tailwind CSS |
+| Component              | Technology                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| Package Manager        | pnpm workspaces                                                                       |
+| Backend Server         | Node.js, Fastify, TypeScript                                                          |
+| Database & ORM         | PostgreSQL 16, Prisma ORM                                                             |
+| Cache & Message Queue  | Redis 7, ioredis                                                                      |
+| Frontend Web App       | React 18, Vite, TypeScript, Tailwind CSS                                              |
 | Analytics & Processing | Asynchronous Redis List Queue, Worker Service, `@maxmind/geoip2-node`, `ua-parser-js` |
-| Testing Suite | Vitest (Unit/Integration), Playwright (E2E), k6 (Performance/Load) |
-| Code Standards | ESLint, Prettier, Husky, lint-staged, Commitlint |
+| Testing Suite          | Vitest (Unit/Integration), Playwright (E2E), k6 (Performance/Load)                    |
+| Code Standards         | ESLint, Prettier, Husky, lint-staged, Commitlint                                      |
 
 ---
 
@@ -71,29 +71,34 @@ Comprehensive architecture, requirements, and execution details are maintained i
 ### Installation & Execution Steps
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd SnipRL
    ```
 
 2. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
 
 3. **Spin up local infrastructure services**:
+
    ```bash
    docker compose up -d
    ```
 
 4. **Configure Environment Variables**:
    Copy `.env.example` configurations into local environment files:
+
    ```bash
    cp apps/api/.env.example apps/api/.env
    cp apps/web/.env.example apps/web/.env
    ```
 
 5. **Execute database migrations**:
+
    ```bash
    pnpm db:migrate
    ```
@@ -103,20 +108,31 @@ Comprehensive architecture, requirements, and execution details are maintained i
    pnpm dev
    ```
 
+### Workspace Commands
+
+| Command           | Action                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| `pnpm dev`        | Starts development servers for both `apps/api` (Fastify) and `apps/web` (Vite) concurrently      |
+| `pnpm build`      | Compiles TypeScript declarations in `packages/shared`, builds `apps/api`, and bundles `apps/web` |
+| `pnpm typecheck`  | Runs TypeScript static type checking across all workspace packages (`noEmit`)                    |
+| `pnpm lint`       | Runs ESLint across the monorepo                                                                  |
+| `pnpm format`     | Formats codebase using Prettier                                                                  |
+| `pnpm db:migrate` | Runs database migrations for `apps/api`                                                          |
+
 ---
 
 ## Environment Configuration Matrix
 
-| Variable | Description | Local Development | Staging | Production |
-|---|---|---|---|---|
-| `DATABASE_URL` | PostgreSQL connection URI | `postgresql://sniprl:sniprl@localhost:5432/sniprl` | Managed DB Cluster | Managed DB Cluster |
-| `REDIS_URL` | Redis connection URI | `redis://localhost:6379` | Managed Redis Instance | Managed Redis Instance |
-| `PORT` | API Service HTTP Port | `3000` | Environment variable | Environment variable |
-| `APP_BASE_URL` | Short URL domain base | `http://localhost:3000` | `https://staging-snip.rl` | `https://sniprl.app` |
-| `PUBLIC_SITE_URL` | Web interface base URL | `http://localhost:5173` | `https://staging-web.sniprl.app` | `https://sniprl.app` |
-| `SAFE_BROWSING_API_KEY` | Google Safe Browsing API Key | `mock` / dev key | Staging Key | Production Key |
-| `GEOIP_DB_PATH` | Path to GeoLite2-City database | `./geo/GeoLite2-City.mmdb` | `/app/geo/GeoLite2-City.mmdb` | `/app/geo/GeoLite2-City.mmdb` |
-| `IP_SALT` | Cryptographic salt for IP hashing | `dev-salt-12345` | Secret Manager | Secret Manager |
+| Variable                | Description                       | Local Development                                  | Staging                          | Production                    |
+| ----------------------- | --------------------------------- | -------------------------------------------------- | -------------------------------- | ----------------------------- |
+| `DATABASE_URL`          | PostgreSQL connection URI         | `postgresql://sniprl:sniprl@localhost:5432/sniprl` | Managed DB Cluster               | Managed DB Cluster            |
+| `REDIS_URL`             | Redis connection URI              | `redis://localhost:6379`                           | Managed Redis Instance           | Managed Redis Instance        |
+| `PORT`                  | API Service HTTP Port             | `3000`                                             | Environment variable             | Environment variable          |
+| `APP_BASE_URL`          | Short URL domain base             | `http://localhost:3000`                            | `https://staging-snip.rl`        | `https://sniprl.app`          |
+| `PUBLIC_SITE_URL`       | Web interface base URL            | `http://localhost:5173`                            | `https://staging-web.sniprl.app` | `https://sniprl.app`          |
+| `SAFE_BROWSING_API_KEY` | Google Safe Browsing API Key      | `mock` / dev key                                   | Staging Key                      | Production Key                |
+| `GEOIP_DB_PATH`         | Path to GeoLite2-City database    | `./geo/GeoLite2-City.mmdb`                         | `/app/geo/GeoLite2-City.mmdb`    | `/app/geo/GeoLite2-City.mmdb` |
+| `IP_SALT`               | Cryptographic salt for IP hashing | `dev-salt-12345`                                   | Secret Manager                   | Secret Manager                |
 
 ---
 
@@ -141,6 +157,7 @@ Commit messages must conform to the Conventional Commits specification:
 ```
 
 #### Allowed Types:
+
 - `feat`: Implementation of a new feature
 - `fix`: Resolution of a bug or defect
 - `docs`: Additions or updates to documentation
@@ -151,6 +168,7 @@ Commit messages must conform to the Conventional Commits specification:
 - `chore`: Operational maintenance, dependency, or build pipeline updates
 
 #### Examples:
+
 - `feat(api): add base62 short code generation module`
 - `fix(redirect): return HTTP 410 Gone for expired links`
 - `docs(readme): update environment configuration matrix`

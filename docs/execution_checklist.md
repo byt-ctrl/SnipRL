@@ -1,22 +1,21 @@
 # Execution Checklist - SnipRL: URL Shortener with Analytics
 
-
 ## Progress Tracker
 
-| Phase | WPs | Status |
-|---|---|---|
-| 0. Foundation | Step 1-4 | [ ] |
-| 1. Data layer + IDs | Step 5-7 | [ ] |
-| 2. Core HTTP API | Step 8-11 | [ ] |
-| 3. Caching | Step 12-14 | [ ] |
-| 4. Analytics | Step 15-20 | [ ] |
-| 5. Abuse/security | Step 21-25 | [ ] |
-| 6. Frontend | Step 26-29 | [ ] |
-| 7. QA | Step 30-33 | [ ] |
-| 8. Observability | Step 34-36 | [ ] |
-| 9. Compliance | Step 37-39 | [ ] |
-| 10. Deploy + launch | Step 40-43 | [ ] |
-| **Total** | **44 WPs** | **0 / 44** |
+| Phase               | WPs        | Status     |
+| ------------------- | ---------- | ---------- |
+| 0. Foundation       | Step 1-4   | [ ]        |
+| 1. Data layer + IDs | Step 5-7   | [ ]        |
+| 2. Core HTTP API    | Step 8-11  | [ ]        |
+| 3. Caching          | Step 12-14 | [ ]        |
+| 4. Analytics        | Step 15-20 | [ ]        |
+| 5. Abuse/security   | Step 21-25 | [ ]        |
+| 6. Frontend         | Step 26-29 | [ ]        |
+| 7. QA               | Step 30-33 | [ ]        |
+| 8. Observability    | Step 34-36 | [ ]        |
+| 9. Compliance       | Step 37-39 | [ ]        |
+| 10. Deploy + launch | Step 40-43 | [ ]        |
+| **Total**           | **44 WPs** | **0 / 44** |
 
 ---
 
@@ -34,20 +33,20 @@
 
 ## Step 2 Monorepo Layout and Toolchain
 
-- [ ] pnpm workspaces configured: `apps/api`, `apps/web`, `packages/shared`
-- [ ] `apps/api` scaffolded (Fastify + TypeScript, starter code stripped)
-- [ ] `apps/web` scaffolded (Vite + React + TS, starter code stripped)
-- [ ] `packages/shared` contains TypeScript types (Link, ClickEvent, API DTOs)
-- [ ] Zod validation schemas added to `packages/shared`
-- [ ] Root scripts added: `dev`, `build`, `test`, `lint`, `typecheck`, `db:migrate`
-- [ ] Node engine pinned (`.nvmrc` + `engines`)
-- [ ] ESLint flat config (strict + typescript-eslint + react-hooks)
-- [ ] Prettier config + `.prettierignore`
-- [ ] Husky + lint-staged pre-commit gate (format + lint + typecheck)
-- [ ] Commitlint commit-msg hook
-- [ ] `Verify:` `pnpm dev` boots both apps
-- [ ] `Verify:` `pnpm typecheck` and `pnpm lint` pass
-- [ ] `Verify:` a type imported from `packages/shared` resolves in both apps
+- [x] pnpm workspaces configured: `apps/api`, `apps/web`, `packages/shared`
+- [x] `apps/api` scaffolded (Fastify + TypeScript, starter code stripped)
+- [x] `apps/web` scaffolded (Vite + React + TS, starter code stripped)
+- [x] `packages/shared` contains TypeScript types (Link, ClickEvent, API DTOs)
+- [x] Zod validation schemas added to `packages/shared`
+- [x] Root scripts added: `dev`, `build`, `test`, `lint`, `typecheck`, `db:migrate`
+- [x] Node engine pinned (`.nvmrc` + `engines`)
+- [x] ESLint flat config (strict + typescript-eslint + react-hooks)
+- [x] Prettier config + `.prettierignore`
+- [x] Husky + lint-staged pre-commit gate (format + lint + typecheck)
+- [x] Commitlint commit-msg hook
+- [x] `Verify:` `pnpm dev` boots both apps
+- [x] `Verify:` `pnpm typecheck` and `pnpm lint` pass
+- [x] `Verify:` a type imported from `packages/shared` resolves in both apps
 
 ## Step 3 Local Development Environment
 
@@ -600,6 +599,6 @@
 # Deferred Log
 
 | Date | Item | Reason | Re-opened date |
-|---|---|---|---|
-|  |  |  |  |
-|  |  |  |  |
+| ---- | ---- | ------ | -------------- |
+|      |      |        |                |
+|      |      |        |                |

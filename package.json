@@ -1,0 +1,48 @@
+{
+  "name": "sniprl-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SnipRL URL Shortener Monorepo",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"@sniprl/*\" dev",
+    "build": "pnpm --filter \"@sniprl/*\" build",
+    "test": "pnpm --filter \"@sniprl/*\" test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"./**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "typecheck": "pnpm --recursive run typecheck",
+    "db:migrate": "pnpm --filter \"@sniprl/api\" db:migrate",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@types/node": "^20.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.9.0",
+    "@typescript-eslint/parser": "^8.9.0",
+    "typescript-eslint": "^8.9.0",
+    "eslint": "^9.12.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.12",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
+  }
+}

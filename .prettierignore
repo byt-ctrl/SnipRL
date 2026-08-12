@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+.vite
+.next
+*.tsbuildinfo
+pnpm-lock.yaml
+*.mmdb
