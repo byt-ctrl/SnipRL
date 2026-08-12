@@ -39,9 +39,10 @@ SnipRL/
 │   └── web/                # React + Vite Web Dashboard Application
 ├── packages/
 │   └── shared/             # Shared TypeScript Types, Zod Schemas, & Base62 Utilities
-├── PRD.md                  # Product Requirements Document
-├── execution_checklist.md   # 44-Step Project Execution Checklist
-├── implementation_plan.md  # Architectural Implementation Plan
+├── docs/
+│   ├── PRD.md              # Product Requirements Document
+│   ├── execution_checklist.md # 44-Step Project Execution Checklist
+│   └── implementation_plan.md  # Architectural Implementation Plan
 ├── .gitignore              # Source control exclusion file
 ├── LICENSE                 # Software License Agreement (MIT)
 └── README.md               # Project documentation
