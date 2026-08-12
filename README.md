@@ -73,7 +73,7 @@ Comprehensive architecture, requirements, and execution details are maintained i
 1. **Clone the repository**:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/byt-ctrl/SnipRL.git
    cd SnipRL
    ```
 

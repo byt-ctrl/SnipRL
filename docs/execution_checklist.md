@@ -77,16 +77,16 @@
 
 ## Step 5 Schema and Migrations
 
-- [ ] Prisma installed and configured in `apps/api`
-- [ ] `links` table defined: `id` (bigserial PK), `short_code` (unique, citext), `long_url` (text NOT NULL), `management_token` (unique NOT NULL), `email`, `custom_alias` (default false), `expires_at`, `max_clicks`, `password_hash`, `created_at` (default now())
-- [ ] `click_events` table defined: `id` (bigserial PK), `link_id` (FK → links), `clicked_at`, `referrer`, `device_type`, `browser`, `os`, `country`, `city`, `ip_hash`, `is_bot` (default false)
-- [ ] Unique index on `links.short_code`
-- [ ] Composite index on `click_events(link_id, clicked_at)`
-- [ ] `citext` extension enabled for case-insensitive `short_code`
-- [ ] First migration created and committed
-- [ ] `db:migrate` script runs `prisma migrate deploy`
-- [ ] `Verify:` migration applies cleanly on a fresh database
-- [ ] `Verify:` reset + migrate reproduces schema (`\d links` shows correct columns/indexes)
+- [x] Prisma installed and configured in `apps/api`
+- [x] `links` table defined: `id` (bigserial PK), `short_code` (unique, citext), `long_url` (text NOT NULL), `management_token` (unique NOT NULL), `email`, `custom_alias` (default false), `expires_at`, `max_clicks`, `password_hash`, `created_at` (default now())
+- [x] `click_events` table defined: `id` (bigserial PK), `link_id` (FK → links), `clicked_at`, `referrer`, `device_type`, `browser`, `os`, `country`, `city`, `ip_hash`, `is_bot` (default false)
+- [x] Unique index on `links.short_code`
+- [x] Composite index on `click_events(link_id, clicked_at)`
+- [x] `citext` extension enabled for case-insensitive `short_code`
+- [x] First migration created and committed
+- [x] `db:migrate` script runs `prisma migrate deploy`
+- [x] `Verify:` migration applies cleanly on a fresh database
+- [x] `Verify:` reset + migrate reproduces schema (`\d links` shows correct columns/indexes)
 
 ## Step 6 Base62 Encoding Module
 

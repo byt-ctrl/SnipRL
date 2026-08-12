@@ -1,0 +1,47 @@
+// Prisma Schema for SnipRL URL Shortener
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Link {
+  id              BigInt       @id @default(autoincrement())
+  shortCode       String?      @unique @map("short_code")
+  longUrl         String       @map("long_url") @db.Text
+  managementToken String       @unique @map("management_token")
+  email           String?
+  customAlias     Boolean      @default(false) @map("custom_alias")
+  expiresAt       DateTime?    @map("expires_at")
+  maxClicks       Int?         @map("max_clicks")
+  passwordHash    String?      @map("password_hash")
+  urlKey          String?      @map("url_key")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  deletedAt       DateTime?    @map("deleted_at")
+  clickEvents     ClickEvent[]
+
+  @@index([urlKey])
+  @@map("links")
+}
+
+model ClickEvent {
+  id         BigInt   @id @default(autoincrement())
+  linkId     BigInt   @map("link_id")
+  clickedAt  DateTime @default(now()) @map("clicked_at")
+  referrer   String?
+  deviceType String?  @map("device_type")
+  browser    String?
+  os         String?
+  country    String?
+  city       String?
+  ipHash     String   @map("ip_hash")
+  isBot      Boolean  @default(false) @map("is_bot")
+  link       Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, clickedAt])
+  @@map("click_events")
+}
