@@ -1,11 +1,19 @@
 import { BASE62_ALPHABET, BASE62_BASE, SHORT_CODE_LENGTH } from '../constants/index.js';
 
 /**
- * Encodes a positive bigint into a Base62 string.
- * Padded to a minimum length of SHORT_CODE_LENGTH (7 characters).
+ * Frozen Base62 Alphabet contract: '0-9a-zA-Z' (indices 0..61)
+ * Order is strictly frozen:
+ *   0-9:  indices 0-9
+ *   a-z:  indices 10-35
+ *   A-Z:  indices 36-61
+ */
+
+/**
+ * Encodes a non-negative bigint into a Base62 string.
+ * Padding contract: Minimum length is SHORT_CODE_LENGTH (7 characters), padded with '0'.
  *
  * @param num Non-negative BigInt to encode
- * @returns Base62 encoded string
+ * @returns Base62 encoded string of minimum length 7
  */
 export function encodeBase62(num: bigint): string {
   if (num < 0n) {
@@ -29,7 +37,7 @@ export function encodeBase62(num: bigint): string {
 }
 
 /**
- * Decodes a Base62 string back into a bigint.
+ * Decodes a Base62 string back into a non-negative bigint.
  *
  * @param str Base62 string to decode
  * @returns Decoded BigInt value
@@ -54,3 +62,7 @@ export function decodeBase62(str: string): bigint {
 
   return result;
 }
+
+// Aliases matching exact checklist method signatures
+export const encode = encodeBase62;
+export const decode = decodeBase62;

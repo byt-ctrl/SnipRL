@@ -90,13 +90,13 @@
 
 ## Step 6 Base62 Encoding Module
 
-- [ ] `packages/shared/base62.ts` written: `encode(num: bigint): string`
-- [ ] `decode(str: string): bigint` written
-- [ ] Alphabet `0-9a-zA-Z` chosen and order documented (frozen)
-- [ ] Padding contract defined: ≥ 1 char; generated codes padded to 7
-- [ ] Property tests: round-trip random 64-bit values
-- [ ] Property tests: boundaries 1, 62, 62⁷−1
-- [ ] `Verify:` `pnpm test` green for base62 suite
+- [x] `packages/shared/base62.ts` written: `encode(num: bigint): string`
+- [x] `decode(str: string): bigint` written
+- [x] Alphabet `0-9a-zA-Z` chosen and order documented (frozen)
+- [x] Padding contract defined: ≥ 1 char; generated codes padded to 7
+- [x] Property tests: round-trip random 64-bit values
+- [x] Property tests: boundaries 1, 62, 62⁷−1
+- [x] `Verify:` `pnpm test` green for base62 suite
 
 ## Step 7 Short-Code Generation and Uniqueness
 
