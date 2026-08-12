@@ -50,6 +50,16 @@ SnipRL/
 
 ---
 
+## System Documentation
+
+Comprehensive architecture, requirements, and execution details are maintained in the [`docs/`](docs/) directory:
+
+- [Product Requirements Document (PRD)](docs/PRD.md): Product specification, feature breakdown, privacy rules, and success metrics.
+- [Execution Checklist](docs/execution_checklist.md): 44-step implementation checklist tracking project progress across 11 phases.
+- [Implementation Plan](docs/implementation_plan.md): Technical architecture guide, data workflow, phase breakdown, and execution principles.
+
+---
+
 ## Local Development Setup
 
 ### Prerequisites
