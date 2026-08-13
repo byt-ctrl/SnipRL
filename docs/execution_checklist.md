@@ -5,7 +5,7 @@
 | Phase               | WPs        | Status     |
 | ------------------- | ---------- | ---------- |
 | 0. Foundation       | Step 1-4   | [ ]        |
-| 1. Data layer + IDs | Step 5-7   | [ ]        |
+| 1. Data layer + IDs | Step 5-7   | [x]        |
 | 2. Core HTTP API    | Step 8-11  | [ ]        |
 | 3. Caching          | Step 12-14 | [ ]        |
 | 4. Analytics        | Step 15-20 | [ ]        |
@@ -23,13 +23,13 @@
 
 ## Step 1 Repository and Repository Standards
 
-- [ ] Repository initialized as a monorepo at `$ROOT` (branch: `main`)
-- [ ] `.gitignore` covers `node_modules`, `.env*`, build output, coverage, geo-IP data files
-- [ ] `README.md` written (purpose, stack, dev setup, environment matrix)
-- [ ] `LICENSE` added (MIT)
-- [ ] Branch protection enabled on `main`: PR required, CI required, no direct pushes
-- [ ] Conventional Commits standard documented in README
-- [ ] `Verify:` `git status` clean; no generated files tracked
+- [x] Repository initialized as a monorepo at `$ROOT` (branch: `main`)
+- [x] `.gitignore` covers `node_modules`, `.env*`, build output, coverage, geo-IP data files
+- [x] `README.md` written (purpose, stack, dev setup, environment matrix)
+- [x] `LICENSE` added (MIT)
+- [x] Branch protection enabled on `main`: PR required, CI required, no direct pushes
+- [x] Conventional Commits standard documented in README
+- [x] `Verify:` `git status` clean; no generated files tracked
 
 ## Step 2 Monorepo Layout and Toolchain
 
@@ -100,13 +100,13 @@
 
 ## Step 7 Short-Code Generation and Uniqueness
 
-- [ ] Insert → encode → update implemented inside a single transaction
-- [ ] `short_code = base62.encode(id)` applied after insert returns the id
-- [ ] Rationale comment/docs added: UUID/hash schemes rejected (longer codes, collisions)
-- [ ] `Verify:` inserting 5 links yields 5 distinct codes (shortest for small ids)
-- [ ] `Verify:` no duplicate `short_code` possible (unique constraint + construction)
+- [x] Insert → encode → update implemented inside a single transaction
+- [x] `short_code = base62.encode(id)` applied after insert returns the id
+- [x] Rationale comment/docs added: UUID/hash schemes rejected (longer codes, collisions)
+- [x] `Verify:` inserting 5 links yields 5 distinct codes (shortest for small ids)
+- [x] `Verify:` no duplicate `short_code` possible (unique constraint + construction)
 
-**Phase 1 complete: [ ]**
+**Phase 1 complete: [x]**
 
 ---
 
