@@ -114,17 +114,17 @@
 
 ## Step 8 Application Bootstrap
 
-- [ ] Fastify instance created with env validation (`DATABASE_URL`, `REDIS_URL`, `PORT`, `APP_BASE_URL`)
-- [ ] Pino logger: pretty in dev, JSON in prod
-- [ ] Request-id propagated on every log line
-- [ ] Redaction configured: `authorization`, `managementToken`, `apiKey`, cookies
-- [ ] Global error handler: `ZodError` → 400 with field errors
-- [ ] Global error handler: unknown → 500 with sanitized body
-- [ ] Structured 404 for unknown routes
-- [ ] `GET /health` returns `{ ok: true, db: "up" }` (SELECT 1)
-- [ ] Graceful shutdown on SIGTERM (drain connections, flush logger)
-- [ ] `Verify:` `pnpm dev` boots; `/health` → 200
-- [ ] `Verify:` unknown route → structured 404 JSON
+- [x] Fastify instance created with env validation (`DATABASE_URL`, `REDIS_URL`, `PORT`, `APP_BASE_URL`)
+- [x] Pino logger: pretty in dev, JSON in prod
+- [x] Request-id propagated on every log line
+- [x] Redaction configured: `authorization`, `managementToken`, `apiKey`, cookies
+- [x] Global error handler: `ZodError` → 400 with field errors
+- [x] Global error handler: unknown → 500 with sanitized body
+- [x] Structured 404 for unknown routes
+- [x] `GET /health` returns `{ ok: true, db: "up" }` (SELECT 1)
+- [x] Graceful shutdown on SIGTERM (drain connections, flush logger)
+- [x] `Verify:` `pnpm dev` boots; `/health` → 200
+- [x] `Verify:` unknown route → structured 404 JSON
 
 ## Step 9 Link Creation Endpoint
 
