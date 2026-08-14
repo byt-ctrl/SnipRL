@@ -1,5 +1,16 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
-import { ZodError } from 'zod';
+import { ZodError, ZodIssue } from 'zod';
+
+interface ZodErrorLike {
+  name: string;
+  issues: ZodIssue[];
+}
+
+function isZodErrorLike(error: unknown): error is ZodErrorLike {
+  if (typeof error !== 'object' || error === null) return false;
+  const candidate = error as Record<string, unknown>;
+  return candidate.name === 'ZodError' && Array.isArray(candidate.issues);
+}
 
 export function errorHandler(
   error: FastifyError,
@@ -8,13 +19,14 @@ export function errorHandler(
 ): void {
   request.log.error(error);
 
-  // 1. Zod validation error -> HTTP 400
-  if (error instanceof ZodError) {
+  // 1. Zod validation error -> HTTP 400 (handle both instanceof and error.name across monorepo boundaries)
+  if (error instanceof ZodError || isZodErrorLike(error)) {
+    const zodIssues = error.issues || [];
     reply.status(400).send({
       statusCode: 400,
       error: 'Bad Request',
       message: 'Validation failed',
-      issues: error.issues.map((issue) => ({
+      issues: zodIssues.map((issue) => ({
         path: issue.path.join('.'),
         message: issue.message,
       })),

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { loadEnv } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { healthRoutes } from './routes/health.js';
+import { linkRoutes } from './routes/links.js';
 
 export function buildApp(): FastifyInstance {
   const env = loadEnv();
@@ -67,6 +68,7 @@ export function buildApp(): FastifyInstance {
 
   // 4. Register route modules
   app.register(healthRoutes);
+  app.register(linkRoutes);
 
   return app;
 }

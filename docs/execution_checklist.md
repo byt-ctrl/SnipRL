@@ -128,16 +128,16 @@
 
 ## Step 9 Link Creation Endpoint
 
-- [ ] Zod contract: `{ longUrl, customAlias?, expiresAt?, maxClicks?, email?, password? }`
-- [ ] `longUrl` validation: http/https only, parseable, ≤ 2048 chars, no embedded credentials
-- [ ] URL normalization: trim, strip default ports, optional fragment/UTM stripping (configurable)
-- [ ] Management token: `randomBytes(32).toString('base64url')`
-- [ ] Token returned in the response exactly once
-- [ ] Transactional insert (link row + short code encode)
-- [ ] Response: `{ shortCode, shortUrl, managementToken, createdAt }`
-- [ ] `Verify:` curl creates a link and returns a token
-- [ ] `Verify:` invalid URL → 400 with field-level error
-- [ ] `Verify:` tokens unique per link (DB constraint)
+- [x] Zod contract: `{ longUrl, customAlias?, expiresAt?, maxClicks?, email?, password? }`
+- [x] `longUrl` validation: http/https only, parseable, ≤ 2048 chars, no embedded credentials
+- [x] URL normalization: trim, strip default ports, optional fragment/UTM stripping (configurable)
+- [x] Management token: `randomBytes(32).toString('base64url')`
+- [x] Token returned in the response exactly once
+- [x] Transactional insert (link row + short code encode)
+- [x] Response: `{ shortCode, shortUrl, managementToken, createdAt }`
+- [x] `Verify:` curl creates a link and returns a token
+- [x] `Verify:` invalid URL → 400 with field-level error
+- [x] `Verify:` tokens unique per link (DB constraint)
 
 ## Step 10 Redirect Endpoint (Hot Path)
 

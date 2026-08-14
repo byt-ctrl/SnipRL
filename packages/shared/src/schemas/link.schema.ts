@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidLongUrl } from '../utils/url.js';
 
 export const RESERVED_ALIASES = new Set([
   'admin',
@@ -13,6 +14,8 @@ export const RESERVED_ALIASES = new Set([
   'auth',
   'static',
   'assets',
+  'favicon.ico',
+  'robots.txt',
 ]);
 
 export const customAliasSchema = z
@@ -28,19 +31,11 @@ export const createLinkSchema = z.object({
   longUrl: z
     .string()
     .trim()
-    .url('Invalid URL format')
+    .min(1, 'longUrl is required')
     .max(2048, 'URL must not exceed 2048 characters')
-    .refine(
-      (url) => {
-        try {
-          const parsed = new URL(url);
-          return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-        } catch {
-          return false;
-        }
-      },
-      { message: 'URL protocol must be http or https' },
-    ),
+    .refine((url) => isValidLongUrl(url), {
+      message: 'Invalid URL: must be http or https, parseable, and contain no embedded credentials',
+    }),
   customAlias: customAliasSchema.optional(),
   expiresAt: z
     .string()
@@ -55,8 +50,10 @@ export const updateLinkSchema = z.object({
   longUrl: z
     .string()
     .trim()
-    .url('Invalid URL format')
     .max(2048, 'URL must not exceed 2048 characters')
+    .refine((url) => isValidLongUrl(url), {
+      message: 'Invalid URL: must be http or https, parseable, and contain no embedded credentials',
+    })
     .optional(),
   expiresAt: z.string().datetime().nullable().optional(),
   maxClicks: z.number().int().positive().nullable().optional(),
