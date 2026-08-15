@@ -4,6 +4,7 @@ import { loadEnv } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { healthRoutes } from './routes/health.js';
 import { linkRoutes } from './routes/links.js';
+import { redirectRoutes } from './routes/redirect.js';
 
 export function buildApp(): FastifyInstance {
   const env = loadEnv();
@@ -66,9 +67,12 @@ export function buildApp(): FastifyInstance {
     });
   });
 
-  // 4. Register route modules
+  // 4. Register API route modules first
   app.register(healthRoutes);
   app.register(linkRoutes);
+
+  // 5. Register redirect wildcard route LAST (so it never shadows /api/* or /health)
+  app.register(redirectRoutes);
 
   return app;
 }

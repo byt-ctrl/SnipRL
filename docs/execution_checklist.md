@@ -141,16 +141,16 @@
 
 ## Step 10 Redirect Endpoint (Hot Path)
 
-- [ ] `GET /:shortCode` route registered after all `/api/*` routes
-- [ ] Lookup by `short_code`
-- [ ] Hit → `302` with correct `Location`
-- [ ] `Cache-Control: no-store` set on redirect responses
-- [ ] Miss → 404 landing page
-- [ ] Expired (`expires_at` passed or `max_clicks` reached) → 410 Gone landing page
-- [ ] Password scaffold: 403 landing page when `password_hash` exists (full support deferred to Step 44)
-- [ ] No click recording yet (comes in Step 15)
-- [ ] `Verify:` `curl -I` shows `302` + `Location` + `Cache-Control: no-store`
-- [ ] `Verify:` unknown code → 404; expired link → 410
+- [x] `GET /:shortCode` route registered after all `/api/*` routes
+- [x] Lookup by `short_code`
+- [x] Hit → `302` with correct `Location`
+- [x] `Cache-Control: no-store` set on redirect responses
+- [x] Miss → 404 landing page
+- [x] Expired (`expires_at` passed or `max_clicks` reached) → 410 Gone landing page
+- [x] Password scaffold: 403 landing page when `password_hash` exists (full support deferred to Step 44)
+- [x] No click recording yet (comes in Step 15)
+- [x] `Verify:` `curl -I` shows `302` + `Location` + `Cache-Control: no-store`
+- [x] `Verify:` unknown code → 404; expired link → 410
 
 ## Step 11 Management API (Token-Authenticated)
 

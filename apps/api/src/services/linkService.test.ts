@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createLinkService } from './linkService';
+import { createLinkService, resolveRedirectService } from './linkService';
 import { encodeBase62 } from '@sniprl/shared';
 
 let currentId = 1n;
@@ -10,9 +10,17 @@ vi.mock('../db/prisma.js', () => {
   return {
     prisma: {
       link: {
-        findUnique: vi.fn(async ({ where }) => {
+        findUnique: vi.fn(async ({ where, include }) => {
           for (const item of storage.values()) {
             if (where.shortCode && item.shortCode === where.shortCode) {
+              if (include?._count) {
+                return {
+                  ...item,
+                  _count: {
+                    clickEvents: (item.clicks as number) || 0,
+                  },
+                };
+              }
               return item;
             }
           }
@@ -37,6 +45,7 @@ vi.mock('../db/prisma.js', () => {
                 urlKey: data.urlKey || null,
                 createdAt: new Date(),
                 deletedAt: null,
+                clicks: 0,
               };
               storage.set(id, record);
               return record;
@@ -57,65 +66,151 @@ vi.mock('../db/prisma.js', () => {
   };
 });
 
-describe('Step 7 & Step 9: Link Service & Short-Code Generation', () => {
+describe('Link Service Unit Tests (Step 7, Step 9, Step 10)', () => {
   beforeEach(() => {
     currentId = 1n;
     storage.clear();
   });
 
-  it('transactionally inserts link, encodes BigInt ID, and updates short_code', async () => {
-    const result = await createLinkService({
-      longUrl: 'https://example.com/test-1',
-    });
-
-    expect(result.shortCode).toBe('0000001');
-    expect(result.shortCode).toBe(encodeBase62(1n));
-    expect(result.managementToken).toBeDefined();
-    expect(result.managementToken.length).toBeGreaterThanOrEqual(40);
-    expect(result.shortUrl).toBe(`http://localhost:3000/0000001`);
-  });
-
-  it('Verify: inserting 5 links yields 5 distinct short codes', async () => {
-    const generatedCodes = new Set<string>();
-
-    for (let i = 1; i <= 5; i++) {
-      const link = await createLinkService({
-        longUrl: `https://example.com/item-${i}`,
+  describe('Link Creation & Short Code Generation', () => {
+    it('transactionally inserts link, encodes BigInt ID, and updates short_code', async () => {
+      const result = await createLinkService({
+        longUrl: 'https://example.com/test-1',
       });
 
-      expect(link.shortCode).toBeDefined();
-      expect(link.shortCode.length).toBe(7);
-      generatedCodes.add(link.shortCode);
-    }
-
-    // Must yield 5 distinct short codes
-    expect(generatedCodes.size).toBe(5);
-  });
-
-  it('preserves custom alias when explicitly provided', async () => {
-    const result = await createLinkService({
-      longUrl: 'https://example.com/custom',
-      customAlias: 'my-custom-link',
+      expect(result.shortCode).toBe('0000001');
+      expect(result.shortCode).toBe(encodeBase62(1n));
+      expect(result.managementToken).toBeDefined();
+      expect(result.managementToken.length).toBeGreaterThanOrEqual(40);
+      expect(result.shortUrl).toBe(`http://localhost:3000/0000001`);
     });
 
-    expect(result.shortCode).toBe('my-custom-link');
-    expect(result.shortUrl).toBe('http://localhost:3000/my-custom-link');
-  });
+    it('Verify: inserting 5 links yields 5 distinct short codes', async () => {
+      const generatedCodes = new Set<string>();
 
-  it('throws 409 Conflict when custom alias is already in use', async () => {
-    await createLinkService({
-      longUrl: 'https://example.com/first',
-      customAlias: 'duplicate-alias',
+      for (let i = 1; i <= 5; i++) {
+        const link = await createLinkService({
+          longUrl: `https://example.com/item-${i}`,
+        });
+
+        expect(link.shortCode).toBeDefined();
+        expect(link.shortCode.length).toBe(7);
+        generatedCodes.add(link.shortCode);
+      }
+
+      // Must yield 5 distinct short codes
+      expect(generatedCodes.size).toBe(5);
     });
 
-    await expect(
-      createLinkService({
-        longUrl: 'https://example.com/second',
+    it('preserves custom alias when explicitly provided', async () => {
+      const result = await createLinkService({
+        longUrl: 'https://example.com/custom',
+        customAlias: 'my-custom-link',
+      });
+
+      expect(result.shortCode).toBe('my-custom-link');
+      expect(result.shortUrl).toBe('http://localhost:3000/my-custom-link');
+    });
+
+    it('throws 409 Conflict when custom alias is already in use', async () => {
+      await createLinkService({
+        longUrl: 'https://example.com/first',
         customAlias: 'duplicate-alias',
-      }),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-      name: 'Conflict',
+      });
+
+      await expect(
+        createLinkService({
+          longUrl: 'https://example.com/second',
+          customAlias: 'duplicate-alias',
+        }),
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        name: 'Conflict',
+      });
+    });
+  });
+
+  describe('Redirect Resolution (Step 10 Hot Path)', () => {
+    it('resolves destination URL for an active link', async () => {
+      const created = await createLinkService({
+        longUrl: 'https://example.com/destination',
+        customAlias: 'active-link',
+      });
+
+      const resolved = await resolveRedirectService(created.shortCode);
+      expect(resolved.longUrl).toBe('https://example.com/destination');
+    });
+
+    it('throws 404 for an unknown shortCode', async () => {
+      await expect(resolveRedirectService('unknown999')).rejects.toMatchObject({
+        statusCode: 404,
+        name: 'NotFound',
+      });
+    });
+
+    it('throws 404 for a soft-deleted link', async () => {
+      const created = await createLinkService({
+        longUrl: 'https://example.com/deleted',
+        customAlias: 'deleted-link',
+      });
+
+      // Soft delete in storage
+      for (const item of storage.values()) {
+        if (item.shortCode === created.shortCode) {
+          item.deletedAt = new Date();
+        }
+      }
+
+      await expect(resolveRedirectService(created.shortCode)).rejects.toMatchObject({
+        statusCode: 404,
+      });
+    });
+
+    it('throws 410 Gone for an expired link', async () => {
+      const pastDate = new Date(Date.now() - 3600000).toISOString();
+      const created = await createLinkService({
+        longUrl: 'https://example.com/expired',
+        customAlias: 'expired-link',
+        expiresAt: pastDate,
+      });
+
+      await expect(resolveRedirectService(created.shortCode)).rejects.toMatchObject({
+        statusCode: 410,
+        message: 'This short link has expired',
+      });
+    });
+
+    it('throws 410 Gone when maximum click limit is reached', async () => {
+      const created = await createLinkService({
+        longUrl: 'https://example.com/limited',
+        customAlias: 'limited-link',
+        maxClicks: 5,
+      });
+
+      // Simulate 5 clicks in storage
+      for (const item of storage.values()) {
+        if (item.shortCode === created.shortCode) {
+          item.clicks = 5;
+        }
+      }
+
+      await expect(resolveRedirectService(created.shortCode)).rejects.toMatchObject({
+        statusCode: 410,
+        message: 'This short link has reached its maximum click limit',
+      });
+    });
+
+    it('throws 403 Forbidden for password protected link scaffold', async () => {
+      const created = await createLinkService({
+        longUrl: 'https://example.com/protected',
+        customAlias: 'protected-link',
+        password: 'secure-password-123',
+      });
+
+      await expect(resolveRedirectService(created.shortCode)).rejects.toMatchObject({
+        statusCode: 403,
+        message: 'This link is password protected',
+      });
     });
   });
 });

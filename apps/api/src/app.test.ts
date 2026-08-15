@@ -12,9 +12,17 @@ vi.mock('./db/prisma.js', () => {
       $queryRaw: vi.fn(async () => [{ '?column?': 1 }]),
       $disconnect: vi.fn(async () => {}),
       link: {
-        findUnique: vi.fn(async ({ where }) => {
+        findUnique: vi.fn(async ({ where, include }) => {
           for (const item of linkStore.values()) {
             if (where.shortCode && item.shortCode === where.shortCode) {
+              if (include?._count) {
+                return {
+                  ...item,
+                  _count: {
+                    clickEvents: (item.clicks as number) || 0,
+                  },
+                };
+              }
               return item;
             }
           }
@@ -39,6 +47,7 @@ vi.mock('./db/prisma.js', () => {
                 urlKey: data.urlKey || null,
                 createdAt: new Date(),
                 deletedAt: null,
+                clicks: 0,
               };
               linkStore.set(id, record);
               return record;
@@ -59,7 +68,7 @@ vi.mock('./db/prisma.js', () => {
   };
 });
 
-describe('API Integration Tests (Step 8 & Step 9)', () => {
+describe('API Integration Tests (Step 8, Step 9, Step 10)', () => {
   let app: FastifyInstance;
 
   beforeAll(() => {
@@ -178,6 +187,117 @@ describe('API Integration Tests (Step 8 & Step 9)', () => {
       expect(body.error).toBe('Bad Request');
       expect(body.issues[0].path).toBe('customAlias');
       expect(body.issues[0].message).toContain('reserved');
+    });
+  });
+
+  describe('Step 10: Redirect Endpoint (GET /:shortCode)', () => {
+    it('redirects with 302, correct Location, and Cache-Control: no-store on active link', async () => {
+      // 1. Create a link
+      const createRes = await app.inject({
+        method: 'POST',
+        url: '/api/links',
+        payload: {
+          longUrl: 'https://example.com/target-redirect-page',
+          customAlias: 'redirect-target',
+        },
+      });
+      expect(createRes.statusCode).toBe(201);
+
+      // 2. Perform GET /:shortCode
+      const redirectRes = await app.inject({
+        method: 'GET',
+        url: '/redirect-target',
+      });
+
+      expect(redirectRes.statusCode).toBe(302);
+      expect(redirectRes.headers.location).toBe('https://example.com/target-redirect-page');
+      expect(redirectRes.headers['cache-control']).toContain('no-store');
+    });
+
+    it('returns 404 for unknown shortCode', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/unknown-code-12345',
+      });
+
+      expect(response.statusCode).toBe(404);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(404);
+      expect(body.message).toBe('Short link not found');
+    });
+
+    it('returns 410 Gone for expired link', async () => {
+      const pastDate = new Date(Date.now() - 3600000).toISOString();
+      await app.inject({
+        method: 'POST',
+        url: '/api/links',
+        payload: {
+          longUrl: 'https://example.com/expired-page',
+          customAlias: 'expired-code',
+          expiresAt: pastDate,
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/expired-code',
+      });
+
+      expect(response.statusCode).toBe(410);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(410);
+      expect(body.message).toBe('This short link has expired');
+    });
+
+    it('returns 410 Gone for link that reached maxClicks', async () => {
+      await app.inject({
+        method: 'POST',
+        url: '/api/links',
+        payload: {
+          longUrl: 'https://example.com/maxclicks-page',
+          customAlias: 'maxclicks-code',
+          maxClicks: 3,
+        },
+      });
+
+      // Simulate 3 clicks in memory
+      for (const item of linkStore.values()) {
+        if (item.shortCode === 'maxclicks-code') {
+          item.clicks = 3;
+        }
+      }
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/maxclicks-code',
+      });
+
+      expect(response.statusCode).toBe(410);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(410);
+      expect(body.message).toBe('This short link has reached its maximum click limit');
+    });
+
+    it('returns 403 Forbidden for password protected link scaffold', async () => {
+      await app.inject({
+        method: 'POST',
+        url: '/api/links',
+        payload: {
+          longUrl: 'https://example.com/secret-page',
+          customAlias: 'secret-code',
+          password: 'super-secret-password',
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/secret-code',
+      });
+
+      expect(response.statusCode).toBe(403);
+      const body = JSON.parse(response.body);
+      expect(body.statusCode).toBe(403);
+      expect(body.message).toBe('This link is password protected');
     });
   });
 });

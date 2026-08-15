@@ -102,6 +102,51 @@ export async function createLinkService(
 }
 
 /**
+ * Resolves a redirect lookup for a given shortCode on the hot path.
+ * Validates expiration, max click limit, password protection, and deletion state.
+ *
+ * NOTE: Click telemetry recording will be hooked asynchronously in Step 15 via Redis Stream.
+ */
+export async function resolveRedirectService(shortCode: string): Promise<{ longUrl: string }> {
+  const link = await prisma.link.findUnique({
+    where: { shortCode },
+    include: {
+      _count: {
+        select: { clickEvents: true },
+      },
+    },
+  });
+
+  // 1. Check existence and soft-deletion
+  if (!link || link.deletedAt !== null) {
+    throw new HttpError(404, 'Short link not found', 'NotFound');
+  }
+
+  // 2. Check expiration timestamp
+  if (link.expiresAt && new Date() > new Date(link.expiresAt)) {
+    throw new HttpError(410, 'This short link has expired', 'Gone');
+  }
+
+  // 3. Check maximum click limit
+  if (
+    link.maxClicks !== null &&
+    link.maxClicks !== undefined &&
+    (link._count?.clickEvents ?? 0) >= link.maxClicks
+  ) {
+    throw new HttpError(410, 'This short link has reached its maximum click limit', 'Gone');
+  }
+
+  // 4. Password protection scaffold (full verification flow deferred to Step 44)
+  if (link.passwordHash) {
+    throw new HttpError(403, 'This link is password protected', 'Forbidden');
+  }
+
+  return {
+    longUrl: link.longUrl,
+  };
+}
+
+/**
  * Find a link by its short code (case-insensitive due to citext column constraint).
  */
 export async function getLinkByShortCode(shortCode: string) {
