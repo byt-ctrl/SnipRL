@@ -19,11 +19,11 @@ I offer a fast, free, simple alternative.
 
 ## 4. Who Uses It
 
-| User | What they need |
-|---|---|
-| Individuals | Free short links for social media, resumes, portfolios |
-| Marketers / small business | Custom short links + click stats |
-| Developers | API to create and manage links programmatically |
+| User                       | What they need                                         |
+| -------------------------- | ------------------------------------------------------ |
+| Individuals                | Free short links for social media, resumes, portfolios |
+| Marketers / small business | Custom short links + click stats                       |
+| Developers                 | API to create and manage links programmatically        |
 
 ## 5. What I Build (Features)
 
@@ -58,9 +58,11 @@ I offer a fast, free, simple alternative.
 4. The dashboard reads the database and shows charts.
 
 **Important rules:**
+
 - Redirects must be fast. I use a cache (Redis) so popular links don't hit the database every time.
 - Clicks are saved after the redirect is sent, never before - visitors never wait for analytics.
 - I use 302, not 301. A 301 lets browsers remember the redirect and stop counting clicks.
+- The runtime is a plain Node.js process. The API and the worker ship as independent processes on managed hosts; no container runtime is required in dev or production.
 
 ## 7. Privacy
 
@@ -71,41 +73,43 @@ I offer a fast, free, simple alternative.
 
 ## 8. Tech Stack
 
-| Part | I use |
-|---|---|
-| Backend | Node.js + TypeScript + Fastify |
-| Database | PostgreSQL (managed) |
-| Cache / queue / rate limits | Redis (managed) |
-| Frontend | React + Vite + Tailwind |
-| Charts | Recharts |
-| Geo-IP | MaxMind GeoLite2 (free, self-hosted) |
-| Hosting | Railway/Render/Fly.io + Vercel + Cloudflare |
-| Load testing | k6 |
+| Part                        | I use                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Backend                     | Node.js + TypeScript + Fastify                                                               |
+| Database                    | PostgreSQL (managed)                                                                         |
+| Cache / queue / rate limits | Redis (managed)                                                                              |
+| Frontend                    | React + Vite + Tailwind                                                                      |
+| Charts                      | Recharts                                                                                     |
+| Geo-IP                      | MaxMind GeoLite2 (free, self-hosted)                                                         |
+| Hosting                     | Railway/Render/Fly.io + Vercel + Cloudflare                                                  |
+| Local dev services          | Native PostgreSQL 16 + Redis 7 on the host (Homebrew / apt / dnf / Windows installer / WSL2) |
+| Deployment model            | Build-on-CI → deploy-artifact → host runs the Node process as a non-root service user        |
+| Load testing                | k6                                                                                           |
 
 ## 9. Build Plan (11 Days)
 
-| Day | What |
-|---|---|
-| 1 | Database tables + short code logic |
-| 2 | Create link API + redirect (302) |
-| 3 | Redis cache for redirects |
-| 4 | Rate limits + Safe Browsing check |
-| 5–6 | Click tracking: queue + background worker |
-| 7 | Analytics dashboard |
-| 8 | Custom aliases + QR codes |
-| 9 | API keys + duplicate detection |
-| 10 | Privacy policy, terms, security review |
-| 11 | Testing, fixes, deploy, launch |
+| Day | What                                                               |
+| --- | ------------------------------------------------------------------ |
+| 1   | Native local Postgres + Redis + database tables + short code logic |
+| 2   | Create link API + redirect (302)                                   |
+| 3   | Redis cache for redirects                                          |
+| 4   | Rate limits + Safe Browsing check                                  |
+| 5–6 | Click tracking: queue + background worker                          |
+| 7   | Analytics dashboard                                                |
+| 8   | Custom aliases + QR codes                                          |
+| 9   | API keys + duplicate detection                                     |
+| 10  | Privacy policy, terms, security review                             |
+| 11  | Testing, fixes, deploy, launch                                     |
 
 ## 10. Success (First 90 Days)
 
-| Metric | Target |
-|---|---|
-| Redirect speed (p99) | Under 100 ms |
-| Uptime | 99.5%+ |
-| Links created | 5,000+ |
-| Weekly active creators | 200+ |
-| Bot clicks wrongly counted | Under 5% |
+| Metric                     | Target       |
+| -------------------------- | ------------ |
+| Redirect speed (p99)       | Under 100 ms |
+| Uptime                     | 99.5%+       |
+| Links created              | 5,000+       |
+| Weekly active creators     | 200+         |
+| Bot clicks wrongly counted | Under 5%     |
 
 ## 11. Open Questions
 

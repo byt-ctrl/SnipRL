@@ -15,6 +15,7 @@
 | 8. Observability    | Step 34-36 | [ ]        |
 | 9. Compliance       | Step 37-39 | [ ]        |
 | 10. Deploy + launch | Step 40-43 | [ ]        |
+| 11. Post-launch     | Step 44    | [ ]        |
 | **Total**           | **44 WPs** | **0 / 44** |
 
 ---
@@ -50,24 +51,41 @@
 
 ## Step 3 Local Development Environment
 
-- [ ] `docker-compose.yml`: `postgres:16` (port 5432, named volume, health check)
-- [ ] `docker-compose.yml`: `redis:7` (port 6379, health check)
+- [ ] PostgreSQL 16 installed natively (Homebrew / apt / dnf / official installer), listening on `localhost:5432`
+- [ ] Local Postgres role + database created (`sniprl` / `sniprl_dev`) with a known password
+- [ ] Redis 7 installed natively, listening on `localhost:6379`, configured to start on boot
 - [ ] `.env.example` created: `DATABASE_URL`, `REDIS_URL`, `PORT`, `APP_BASE_URL`, `PUBLIC_SITE_URL`
 - [ ] `.env` populated locally from example (gitignored)
-- [ ] `Verify:` `docker compose up -d` → `pg_isready` succeeds
+- [ ] `Verify:` `pg_isready -h localhost -p 5432` returns `accepting connections`
 - [ ] `Verify:` `redis-cli ping` returns `PONG`
+- [ ] `docs/local-setup.md` committed with per-OS install commands (macOS, Ubuntu/Debian, Fedora, Windows)
+
+## Step 3a Local Service Provisioning Reference
+
+> Fills the role previously played by `docker-compose.yml`. Each developer runs Postgres and Redis natively on their machine; no containers in the dev loop.
+
+- [ ] `docs/local-setup.md` enumerates the supported install path per OS
+- [ ] macOS section: `brew install postgresql@16 redis` + `brew services start ...`
+- [ ] Ubuntu/Debian section: `apt-get install postgresql-16 redis-server` + `systemctl enable --now ...`
+- [ ] Fedora section: `dnf install postgresql-16 redis` + `systemctl enable --now ...`
+- [ ] Windows section: official Postgres installer + Memurai or Microsoft `redis-windows` port, run as services
+- [ ] Optional fallback: WSL2 Ubuntu on Windows (no Windows-native services)
+- [ ] One-time DB bootstrap script committed at `scripts/db-bootstrap.sh` (creates role + db, enables `citext`, applies first migration)
+- [ ] Reset recipe documented: drop + recreate `sniprl_dev`, re-run migrations
+- [ ] `Verify:` fresh laptop, follow docs from scratch → API boots and `/health` returns 200 in under 15 minutes
+- [ ] `Verify:` `pnpm dev` runs without any container runtime installed on the host
 
 ## Step 4 CI Pipeline
 
 - [ ] GitHub Actions workflow `.github/workflows/ci.yml` on push/PR
 - [ ] `lint` job added
 - [ ] `typecheck` job added
-- [ ] `test` job added with service containers (postgres:16, redis:7)
+- [ ] `test` job added with ephemeral Postgres + Redis provisioned per run (hosted service on the CI runner, isolated schema/namespace per job)
 - [ ] `build` job added
-- [ ] Image build job on merge to `main` (multi-stage, non-root runtime)
+- [ ] Deploy artifact job on merge to `main` (pnpm build output uploaded, host pulls artifact on deploy)
 - [ ] pnpm store caching for fast installs
 - [ ] `Verify:` CI green on a feature branch
-- [ ] `Verify:` image artifact produced on merge to `main`
+- [ ] `Verify:` deploy artifact produced on merge to `main`
 
 **Phase 0 complete: [ ]**
 
@@ -408,7 +426,7 @@
 - [ ] Suite: duplicate detection
 - [ ] Suite: analytics enqueue → worker drain → aggregates correct
 - [ ] Suite: API key create/use/revoke
-- [ ] `Verify:` suite green in CI (service containers)
+- [ ] `Verify:` suite green in CI (ephemeral Postgres + Redis)
 - [ ] `Verify:` no flakiness across 3 local reruns
 
 ## Step 32 End-to-End Tests (Playwright)
@@ -427,7 +445,7 @@
 - [ ] `redirect.js`: ramp to saturation at 90% cache hit / 10% cold
 - [ ] p50/p95/p99 captured per load level
 - [ ] `create.js`: throughput under 20/hr rate limit (429s expected)
-- [ ] Run against local dockerized stack
+- [ ] Run against local stack (Postgres + Redis on `localhost`)
 - [ ] Run against staging deployment
 - [ ] HTML report produced
 - [ ] `docs/load-testing.md`: methodology, graphs, first bottleneck, mitigation
@@ -506,7 +524,7 @@
 - [ ] CI redaction gate re-verified (secret-in-log fails CI)
 - [ ] `pnpm audit` - zero high-severity findings
 - [ ] Audit gate enabled in CI
-- [ ] Container: non-root user, read-only FS, minimal base image
+- [ ] Hosting process: runs as non-root service user with least-privilege filesystem access; writeable scratch dir whitelisted
 - [ ] `Verify:` security headers present on all responses
 
 **Phase 9 complete: [ ]**
@@ -527,7 +545,7 @@
 - [ ] Cloudflare in front (proxied/orange-cloud)
 - [ ] Production env vars set in platform secret managers
 - [ ] Safe Browsing API key provisioned
-- [ ] MaxMind license + GeoLite2 fetch into worker image at deploy
+- [ ] MaxMind license + GeoLite2 fetch into worker deploy bundle at deploy
 - [ ] `Verify:` `curl https://<api>/health` → 200 from outside
 - [ ] `Verify:` domain resolves; TLS valid
 
