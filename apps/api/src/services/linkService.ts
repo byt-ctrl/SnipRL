@@ -1,6 +1,13 @@
 import { prisma } from '../db/prisma.js';
-import { encodeBase62, normalizeUrl, CreateLinkInput, CreateLinkResponse } from '@sniprl/shared';
-import { generateManagementToken, hashPassword } from '../utils/security.js';
+import {
+  encodeBase62,
+  normalizeUrl,
+  CreateLinkInput,
+  CreateLinkResponse,
+  UpdateLinkInput,
+  LinkStatsResponse,
+} from '@sniprl/shared';
+import { generateManagementToken, hashPassword, timingSafeTokenEqual } from '../utils/security.js';
 import { loadEnv } from '../config/env.js';
 
 export class HttpError extends Error {
@@ -153,4 +160,115 @@ export async function getLinkByShortCode(shortCode: string) {
   return prisma.link.findUnique({
     where: { shortCode },
   });
+}
+
+/**
+ * Verifies the provided management token against the stored token
+ * using constant-time comparison. Never logs token values.
+ * Throws 401 when missing or invalid.
+ */
+function requireManagementAuth(providedToken: string | null, storedToken: string): void {
+  if (!providedToken || !timingSafeTokenEqual(providedToken, storedToken)) {
+    throw new HttpError(401, 'Invalid or missing management token', 'Unauthorized');
+  }
+}
+
+/**
+ * Step 11: Returns link metadata + total click counts (token-authenticated).
+ */
+export async function getLinkStatsService(
+  shortCode: string,
+  providedToken: string | null,
+): Promise<LinkStatsResponse> {
+  const link = await prisma.link.findUnique({
+    where: { shortCode },
+    include: {
+      _count: {
+        select: { clickEvents: true },
+      },
+    },
+  });
+
+  // 1. Existence + soft-deletion → 404 (same semantics as redirect path)
+  if (!link || link.deletedAt !== null) {
+    throw new HttpError(404, 'Short link not found', 'NotFound');
+  }
+
+  // 2. Token auth → 401 (constant-time, no token in logs/errors)
+  requireManagementAuth(providedToken, link.managementToken);
+
+  return {
+    shortCode: link.shortCode!,
+    longUrl: link.longUrl,
+    createdAt: link.createdAt.toISOString(),
+    expiresAt: link.expiresAt ? link.expiresAt.toISOString() : null,
+    maxClicks: link.maxClicks ?? null,
+    totalClicks: link._count?.clickEvents ?? 0,
+  };
+}
+
+/**
+ * Step 11: Updates longUrl / expiresAt / maxClicks / email (token-authenticated).
+ * Validation is enforced at the route layer with updateLinkSchema, which mirrors
+ * createLinkSchema rules; longUrl is re-normalized exactly as in creation.
+ */
+export async function updateLinkService(
+  shortCode: string,
+  providedToken: string | null,
+  input: UpdateLinkInput,
+  options: CreateLinkOptions = {},
+): Promise<{
+  shortCode: string;
+  longUrl: string;
+  expiresAt: string | null;
+  maxClicks: number | null;
+  email: string | null;
+  createdAt: string;
+}> {
+  const existing = await prisma.link.findUnique({
+    where: { shortCode },
+  });
+
+  // 1. Existence + soft-deletion → 404
+  if (!existing || existing.deletedAt !== null) {
+    throw new HttpError(404, 'Short link not found', 'NotFound');
+  }
+
+  // 2. Token auth → 401
+  requireManagementAuth(providedToken, existing.managementToken);
+
+  // 3. Build partial update payload (undefined = leave unchanged, null = clear)
+  const data: {
+    longUrl?: string;
+    expiresAt?: Date | null;
+    maxClicks?: number | null;
+    email?: string | null;
+  } = {};
+
+  if (input.longUrl !== undefined) {
+    data.longUrl = normalizeUrl(input.longUrl, options);
+  }
+  if (input.expiresAt !== undefined) {
+    data.expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+  }
+  if (input.maxClicks !== undefined) {
+    data.maxClicks = input.maxClicks;
+  }
+  if (input.email !== undefined) {
+    data.email = input.email;
+  }
+
+  const updated = await prisma.link.update({
+    where: { id: existing.id },
+    data,
+  });
+
+  return {
+    shortCode: updated.shortCode!,
+    longUrl: updated.longUrl,
+    expiresAt: updated.expiresAt ? updated.expiresAt.toISOString() : null,
+    maxClicks: updated.maxClicks ?? null,
+    email: updated.email ?? null,
+    createdAt: updated.createdAt.toISOString(),
+  };
 }

@@ -21,6 +21,36 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
+ * Constant-time management-token comparison.
+ * Never throws on length mismatch: performs a dummy constant-time
+ * comparison instead, so callers don't leak the expected length
+ * through early-return timing (Cloudflare timingSafeEqual pattern).
+ */
+export function timingSafeTokenEqual(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) {
+    // Dummy compare to keep timing constant; always false here.
+    timingSafeEqual(a, a);
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
+
+/**
+ * Extracts a `Bearer <token>` value from an Authorization header.
+ * Returns null when missing or malformed. Never logs the token value.
+ */
+export function extractBearerToken(authorizationHeader: unknown): string | null {
+  if (typeof authorizationHeader !== 'string') return null;
+  const [scheme, token] = authorizationHeader.split(' ');
+  if (!scheme || !token) return null;
+  if (scheme.toLowerCase() !== 'bearer') return null;
+  const trimmed = token.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/**
  * Verifies a plaintext password against a stored scrypt hash.
  */
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
