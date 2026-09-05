@@ -272,3 +272,34 @@ export async function updateLinkService(
     createdAt: updated.createdAt.toISOString(),
   };
 }
+
+/**
+ * Step 11: Soft-deletes a link (token-authenticated).
+ * Sets `deletedAt = now()`; row is preserved for audit/retention.
+ * `deleted_at` column + migration already exist (see init_schema migration);
+ * no new migration required. Redirect/stats/update treat soft-deleted
+ * rows as 404, so a second DELETE also yields 404 (soft-deleted as absent).
+ */
+export async function deleteLinkService(
+  shortCode: string,
+  providedToken: string | null,
+): Promise<void> {
+  const existing = await prisma.link.findUnique({
+    where: { shortCode },
+  });
+
+  // 1. Existence + soft-deletion → 404
+  if (!existing || existing.deletedAt !== null) {
+    throw new HttpError(404, 'Short link not found', 'NotFound');
+  }
+
+  // 2. Token auth → 401 (constant-time, no token in logs/errors)
+  requireManagementAuth(providedToken, existing.managementToken);
+
+  // 3. Soft delete via timestamp update (never hard-deletes here;
+  // hard purge is a retention job, Step 38).
+  await prisma.link.update({
+    where: { id: existing.id },
+    data: { deletedAt: new Date() },
+  });
+}

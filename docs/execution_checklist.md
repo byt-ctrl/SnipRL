@@ -6,7 +6,7 @@
 | ------------------- | ---------- | ---------- |
 | 0. Foundation       | Step 1-4   | [ ]        |
 | 1. Data layer + IDs | Step 5-7   | [x]        |
-| 2. Core HTTP API    | Step 8-11  | [ ]        |
+| 2. Core HTTP API    | Step 8-11  | [x]        |
 | 3. Caching          | Step 12-14 | [ ]        |
 | 4. Analytics        | Step 15-20 | [ ]        |
 | 5. Abuse/security   | Step 21-25 | [ ]        |
@@ -172,17 +172,17 @@
 
 ## Step 11 Management API (Token-Authenticated)
 
-- [ ] `GET /api/links/:shortCode/stats` - metadata + total clicks
-- [ ] `PATCH /api/links/:shortCode` - update `long_url`, `expires_at`, `max_clicks`, `email`
-- [ ] PATCH validates with the same rules as creation
-- [ ] `DELETE /api/links/:shortCode` - soft delete (`deleted_at` migration) → 204
-- [ ] Auth middleware with `crypto.timingSafeEqual`
-- [ ] Token value absent from all logs
-- [ ] `Verify:` no token → 401; wrong token → 401
-- [ ] `Verify:` correct token → full CRUD works
-- [ ] `Verify:` grep logs for token value → no match
+- [x] `GET /api/links/:shortCode/stats` - metadata + total clicks
+- [x] `PATCH /api/links/:shortCode` - update `long_url`, `expires_at`, `max_clicks`, `email`
+- [x] PATCH validates with the same rules as creation
+- [x] `DELETE /api/links/:shortCode` - soft delete (`deleted_at` migration) → 204
+- [x] Auth middleware with `crypto.timingSafeEqual`
+- [x] Token value absent from all logs
+- [x] `Verify:` no token → 401; wrong token → 401
+- [x] `Verify:` correct token → full CRUD works
+- [x] `Verify:` grep logs for token value → no match
 
-**Phase 2 complete: [ ]**
+**Phase 2 complete: [x]**
 
 ---
 
