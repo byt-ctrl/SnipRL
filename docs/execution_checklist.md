@@ -190,11 +190,11 @@
 
 ## Step 12 Redis Client Layer
 
-- [ ] `ioredis` singleton wired to `REDIS_URL`
-- [ ] Retry/backoff lifecycle with reconnect logging
-- [ ] Fail-fast on invalid config at boot
-- [ ] Helper module: `get`, `set`, `del`, `incr`, `hset/hget` with JSON serialization
-- [ ] Degradation contract: Redis outage must not crash the app
+- [x] `ioredis` singleton wired to `REDIS_URL`
+- [x] Retry/backoff lifecycle with reconnect logging
+- [x] Fail-fast on invalid config at boot
+- [x] Helper module: `get`, `set`, `del`, `incr`, `hset/hget` with JSON serialization
+- [x] Degradation contract: Redis outage must not crash the app
 - [ ] `Verify:` smoke get/set against local Redis
 - [ ] `Verify:` simulated Redis outage → app still serves redirects from DB
 

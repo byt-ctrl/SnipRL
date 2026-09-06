@@ -1,5 +1,6 @@
 import { buildApp } from './app.js';
 import { loadEnv } from './config/env.js';
+import { closeRedis, getRedisClient } from './cache/redis.js';
 import { prisma } from './db/prisma.js';
 
 const env = loadEnv();
@@ -7,6 +8,9 @@ const app = buildApp();
 
 async function start(): Promise<void> {
   try {
+    // Fail fast on invalid REDIS_URL. A down Redis server does NOT throw
+    // here — connection is async and the app degrades to the database.
+    getRedisClient();
     await app.listen({ port: env.PORT, host: '0.0.0.0' });
     app.log.info(`SnipRL API server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   } catch (err) {
@@ -27,6 +31,9 @@ async function gracefulShutdown(signal: string): Promise<void> {
     // 2. Disconnect Prisma DB client
     await prisma.$disconnect();
     app.log.info('Database client disconnected');
+
+    // 3. Close Redis singleton (stops reconnection attempts)
+    await closeRedis();
 
     process.exit(0);
   } catch (err) {

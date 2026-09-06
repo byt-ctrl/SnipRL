@@ -1,6 +1,7 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { loadEnv } from './config/env.js';
+import { setRedisLogger } from './cache/redis.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { healthRoutes } from './routes/health.js';
 import { linkRoutes } from './routes/links.js';
@@ -54,6 +55,10 @@ export function buildApp(): FastifyInstance {
   app.addHook('onRequest', async (request, reply) => {
     reply.header('x-request-id', request.id);
   });
+
+  // 1b. Route Redis lifecycle logs through the app (Pino) logger.
+  // This only sets the logger — it does not open a Redis connection.
+  setRedisLogger(app.log);
 
   // 2. Register global error handler
   app.setErrorHandler(errorHandler);
