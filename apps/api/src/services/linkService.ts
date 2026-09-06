@@ -9,6 +9,14 @@ import {
 } from '@sniprl/shared';
 import { generateManagementToken, hashPassword, timingSafeTokenEqual } from '../utils/security.js';
 import { loadEnv } from '../config/env.js';
+import {
+  getLinkCache,
+  invalidateLinkCache,
+  setLinkCache,
+  toCachedLink,
+} from '../cache/linkCache.js';
+import type { CachedLink } from '../cache/linkCache.js';
+import type { RedisLogger } from '../cache/redis.js';
 
 export class HttpError extends Error {
   statusCode: number;
@@ -100,6 +108,10 @@ export async function createLinkService(
   const shortCode = link.shortCode!;
   const shortUrl = `${env.APP_BASE_URL}/${shortCode}`;
 
+  // Step 13 write-through: populate `link:{shortCode}` after commit.
+  // Never throws (degrades when Redis is down); built from the merged DB row.
+  await setLinkCache(shortCode, toCachedLink(link));
+
   return {
     shortCode,
     shortUrl,
@@ -112,9 +124,80 @@ export async function createLinkService(
  * Resolves a redirect lookup for a given shortCode on the hot path.
  * Validates expiration, max click limit, password protection, and deletion state.
  *
+ * Step 13 cache-aside: HIT serves from `link:{shortCode}` (enforcing
+ * `expiresAt`/`passwordHash` from cache, plus a lightweight DB count check
+ * when `maxClicks != null`), refreshes the 24h sliding TTL, and returns a
+ * 302 payload immediately. MISS/corrupt/outage falls back to the DB and
+ * repopulates the cache. An optional logger enables request-scoped hit/miss
+ * debug logs (only the cache key is ever logged); omitted for backward
+ * compatibility with existing callers/tests.
+ *
  * NOTE: Click telemetry recording will be hooked asynchronously in Step 15 via Redis Stream.
  */
-export async function resolveRedirectService(shortCode: string): Promise<{ longUrl: string }> {
+export async function resolveRedirectService(
+  shortCode: string,
+  logger?: RedisLogger,
+): Promise<{ longUrl: string }> {
+  // 0. Cache-aside HIT path (miss/corrupt/outage -> null -> DB fallback below).
+  const cached: CachedLink | null = await getLinkCache(shortCode, logger);
+
+  if (cached !== null) {
+    // 0a. Expiry enforced from cache. Expired entries are evicted and
+    // surface 410 without refreshing the TTL.
+    if (cached.expiresAt !== null) {
+      const expiresMs = Date.parse(cached.expiresAt);
+      if (!Number.isNaN(expiresMs) && Date.now() > expiresMs) {
+        await invalidateLinkCache(shortCode, logger);
+        throw new HttpError(410, 'This short link has expired', 'Gone');
+      }
+    }
+
+    // 0b. Password scaffold parity: presence of a hash blocks the redirect.
+    if (cached.passwordHash) {
+      throw new HttpError(403, 'This link is password protected', 'Forbidden');
+    }
+
+    // 0c. maxClicks cannot be enforced from the cached scalar alone because
+    // clicks live in `click_events`. Revalidate with a lightweight DB count
+    // read so 410 stays accurate; also catches a soft-delete that raced a
+    // missed DEL. On DB outage, fail open to the cached redirect (the cache
+    // already passed expiry/password checks).
+    if (cached.maxClicks !== null) {
+      try {
+        const revalidation = await prisma.link.findUnique({
+          where: { shortCode },
+          include: {
+            _count: {
+              select: { clickEvents: true },
+            },
+          },
+        });
+
+        if (!revalidation || revalidation.deletedAt !== null) {
+          await invalidateLinkCache(shortCode, logger);
+          throw new HttpError(404, 'Short link not found', 'NotFound');
+        }
+
+        const liveClicks = revalidation._count?.clickEvents ?? 0;
+        const liveMax = revalidation.maxClicks ?? null;
+        if (liveMax !== null && liveMax !== undefined && liveClicks >= liveMax) {
+          throw new HttpError(410, 'This short link has reached its maximum click limit', 'Gone');
+        }
+      } catch (err) {
+        if (err instanceof HttpError) {
+          throw err;
+        }
+        // DB unavailable during revalidation: fail open to cached redirect.
+      }
+    }
+
+    // 0d. Sliding TTL refresh (SET EX 86400) then serve from cache.
+    await setLinkCache(shortCode, cached, logger);
+    return {
+      longUrl: cached.longUrl,
+    };
+  }
+
   const link = await prisma.link.findUnique({
     where: { shortCode },
     include: {
@@ -147,6 +230,9 @@ export async function resolveRedirectService(shortCode: string): Promise<{ longU
   if (link.passwordHash) {
     throw new HttpError(403, 'This link is password protected', 'Forbidden');
   }
+
+  // 5. MISS populate: cache the DB row for the next redirect (never throws).
+  await setLinkCache(shortCode, toCachedLink(link), logger);
 
   return {
     longUrl: link.longUrl,
@@ -263,6 +349,11 @@ export async function updateLinkService(
     data,
   });
 
+  // Step 13 write-through: refresh `link:{shortCode}` from the merged DB row
+  // (not just the PATCH input) so the next redirect serves fresh values.
+  // Never throws; a Redis outage leaves the DB as source of truth.
+  await setLinkCache(updated.shortCode!, toCachedLink(updated));
+
   return {
     shortCode: updated.shortCode!,
     longUrl: updated.longUrl,
@@ -302,4 +393,8 @@ export async function deleteLinkService(
     where: { id: existing.id },
     data: { deletedAt: new Date() },
   });
+
+  // Step 13: evict `link:{shortCode}` so the next redirect is a cache MISS
+  // and falls back to the DB (which now reports 404). Never throws.
+  await invalidateLinkCache(shortCode);
 }

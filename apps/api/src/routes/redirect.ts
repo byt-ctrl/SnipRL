@@ -5,8 +5,9 @@ export async function redirectRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get<{ Params: { shortCode: string } }>('/:shortCode', async (request, reply) => {
     const { shortCode } = request.params;
 
-    // Resolve the destination URL
-    const { longUrl } = await resolveRedirectService(shortCode);
+    // Step 13 cache-aside: request-scoped logger carries the request-id into
+    // hit/miss debug logs (only the cache key is ever logged, never values).
+    const { longUrl } = await resolveRedirectService(shortCode, request.log);
 
     // Set Cache-Control: no-store to ensure clicks always hit the server (essential for analytics in Step 15)
     reply.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

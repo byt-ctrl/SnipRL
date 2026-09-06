@@ -5,6 +5,39 @@ import { encodeBase62 } from '@sniprl/shared';
 let currentId = 1n;
 const storage = new Map<bigint, Record<string, unknown>>();
 
+// Step 13: isolate the redirect cache so unit tests exercise the DB fallback
+// (MISS) path without opening a real Redis connection. HIT-path behaviour is
+// covered by `cache/linkCache.test.ts` against a mocked ioredis client.
+vi.mock('../cache/linkCache.js', () => {
+  return {
+    LINK_CACHE_TTL_SECONDS: 86400,
+    linkCacheKey: (code: string): string => `link:${code}`,
+    isCachedLink: (): boolean => true,
+    toCachedLink: (row: {
+      longUrl: string;
+      expiresAt: Date | string | null;
+      maxClicks: number | null;
+      passwordHash: string | null;
+    }): {
+      longUrl: string;
+      expiresAt: string | null;
+      maxClicks: number | null;
+      passwordHash: string | null;
+    } => ({
+      longUrl: row.longUrl,
+      expiresAt: row.expiresAt instanceof Date ? row.expiresAt.toISOString() : row.expiresAt,
+      maxClicks: row.maxClicks ?? null,
+      passwordHash: row.passwordHash ?? null,
+    }),
+    getLinkCache: vi.fn(async () => null),
+    setLinkCache: vi.fn(async () => 'OK'),
+    invalidateLinkCache: vi.fn(async () => 1),
+    getLinkCacheStats: (): { hits: number; misses: number } => ({ hits: 0, misses: 0 }),
+    resetLinkCacheStats: vi.fn(),
+    setLinkCacheLogger: vi.fn(),
+  };
+});
+
 // Mock DB prisma client for unit isolation
 vi.mock('../db/prisma.js', () => {
   return {
