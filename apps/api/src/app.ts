@@ -6,6 +6,7 @@ import { setLinkCacheLogger } from './cache/linkCache.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { healthRoutes } from './routes/health.js';
 import { linkRoutes } from './routes/links.js';
+import { metricsRoutes } from './routes/metrics.js';
 import { redirectRoutes } from './routes/redirect.js';
 
 export function buildApp(): FastifyInstance {
@@ -77,8 +78,10 @@ export function buildApp(): FastifyInstance {
   // 4. Register API route modules first
   app.register(healthRoutes);
   app.register(linkRoutes);
+  // 4b. Register metrics BEFORE the redirect wildcard so /metrics is never shadowed.
+  app.register(metricsRoutes);
 
-  // 5. Register redirect wildcard route LAST (so it never shadows /api/* or /health)
+  // 5. Register redirect wildcard route LAST (so it never shadows /api/*, /health, or /metrics)
   app.register(redirectRoutes);
 
   return app;

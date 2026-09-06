@@ -32,6 +32,7 @@ vi.mock('./cache/linkCache.js', () => {
     setLinkCache: vi.fn(async () => 'OK'),
     invalidateLinkCache: vi.fn(async () => 1),
     getLinkCacheStats: (): { hits: number; misses: number } => ({ hits: 0, misses: 0 }),
+    getLinkCacheHitRate: (): number => 0,
     resetLinkCacheStats: vi.fn(),
     setLinkCacheLogger: vi.fn(),
   };

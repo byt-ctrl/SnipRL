@@ -200,22 +200,22 @@
 
 ## Step 13 Cache-Aside on the Redirect Path
 
-- [ ] Key scheme `link:{shortCode}` → JSON `{ longUrl, expiresAt, maxClicks, passwordHash }`
-- [ ] TTL 24h, refreshed on every hit (`SET ... EX 86400`)
-- [ ] Flow: cache hit → 302 immediately
-- [ ] Flow: cache miss → DB read → populate → 302
-- [ ] Write-through: set cache on create/update
-- [ ] Cache entry deleted on link delete
-- [ ] Corrupt cache value falls back to DB gracefully
-- [ ] Hit/miss counters emitted (debug level)
+- [x] Key scheme `link:{shortCode}` → JSON `{ longUrl, expiresAt, maxClicks, passwordHash }`
+- [x] TTL 24h, refreshed on every hit (`SET ... EX 86400`)
+- [x] Flow: cache hit → 302 immediately
+- [x] Flow: cache miss → DB read → populate → 302
+- [x] Write-through: set cache on create/update
+- [x] Cache entry deleted on link delete
+- [x] Corrupt cache value falls back to DB gracefully
+- [x] Hit/miss counters emitted (debug level)
 - [ ] `Verify:` second request for same code skips DB (query counter)
 - [ ] `Verify:` after delete, first request is a cache miss
 
 ## Step 14 Cache Telemetry
 
-- [ ] `redirect_cache_hits` / `redirect_cache_misses` counters exposed (`GET /metrics` or log emission)
-- [ ] Ops note committed: expected ratio + action on decline (eviction tuning, capacity)
-- [ ] `Verify:` counters move under a mixed workload
+- [x] `redirect_cache_hits` / `redirect_cache_misses` counters exposed (`GET /metrics` or log emission)
+- [x] Ops note committed: expected ratio + action on decline (eviction tuning, capacity)
+- [x] `Verify:` counters move under a mixed workload
 
 **Phase 3 complete: [ ]**
 

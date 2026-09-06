@@ -97,6 +97,18 @@ export function getLinkCacheStats(): LinkCacheStats {
   return { hits: linkCacheHits, misses: linkCacheMisses };
 }
 
+/**
+ * Hit ratio for the redirect cache: `hits / (hits + misses)` rounded to
+ * 4 decimal places. Returns `0` when no traffic has been observed.
+ */
+export function getLinkCacheHitRate(): number {
+  const total: number = linkCacheHits + linkCacheMisses;
+  if (total === 0) {
+    return 0;
+  }
+  return Math.round((linkCacheHits / total) * 10000) / 10000;
+}
+
 /** Test-only: reset the in-memory hit/miss counters. */
 export function resetLinkCacheStats(): void {
   linkCacheHits = 0;
